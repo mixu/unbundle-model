@@ -1,0 +1,11 @@
+{
+  "name": "unbundle_model",
+  "description": "A simple view layer implementation",
+  "version": "0.0.1",
+  "dependencies": {
+    "miniee": "git://github.com/mixu/miniee.git#master"
+   },
+  "devDependencies": {
+    "mocha": "*"
+  }
+}
