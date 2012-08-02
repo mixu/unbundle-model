@@ -5,6 +5,7 @@
   "dependencies": {
     "miniee": "git://github.com/mixu/miniee.git#master"
    },
+  "main": "./lib/index.js",
   "devDependencies": {
     "mocha": "*"
   }
