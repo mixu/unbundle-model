@@ -7,7 +7,7 @@ exports['can add a model into the collection, adding causes add event'] = functi
   var collection = new Collection(),
       model = new Model();
   assert.equal(0, collection.length);
-  collection.on('add', function(m, c) {
+  collection.on('add', function(m, c, options) {
     assert.equal(model, m);
     assert.equal(collection, c);
     done();
@@ -19,28 +19,44 @@ exports['can add a model into the collection, adding causes add event'] = functi
 
 exports['can add an array of models into the collection, causes add events'] = function(done) {
   var collection = new Collection(),
-      models = [ new Model(), new Model(), new Model ],
-      events = [];
-  collection.on('add', function(m) {
-    events.push(m);
+      models = [ new Model({ a: 'a' }), new Model({ a: 'b' }), new Model({a: 'c'}) ],
+      events = [],
+      expected = [
+        { model: models[0], o: { index: 0 } },
+        { model: models[1], o: { index: 1 } },
+        { model: models[2], o: { index: 2 } }
+        ];
+  collection.on('add', function(model, coll, options) {
+    assert.equal(coll, collection);
+    events.push({ model: model, o: options });
     if(events.length == 3) {
-      assert.deepEqual(models, events);
+      assert.equal(3, collection.length);
+      [0, 1, 2].forEach(function(i){
+        assert.equal(models[i], collection.at(i));
+      });
+      assert.deepEqual(events, expected);
       done();
     }
   });
   collection.add(models);
-  assert.equal(3, collection.length);
-  [0, 1, 2].forEach(function(i){
-    assert.equal(models[i], collection.at(i));
-  });
 };
 
 exports['can remove a model from the collection, removing causes a remove event and reindexes'] = function(done) {
   var collection = new Collection(),
       models = [ new Model(), new Model(), new Model ],
-      calls = 0;
+      calls = 0,
+      events = [],
+      expected = [
+        { model: models[0], o: { index: 0 } },
+        { model: models[1], o: { index: 0 } },
+        { model: models[2], o: { index: 0 } }
+        ];
   collection.add(models);
-  collection.on('remove', function() { calls++ });
+  collection.on('remove', function(model, coll, options) {
+    assert.equal(coll, collection);
+    events.push({ model: model, o: options });
+    calls++;
+  });
   for(var i = 0; i < 3; i++) {
     collection.remove(models[0]);
     models = models.slice(1);
@@ -50,6 +66,7 @@ exports['can remove a model from the collection, removing causes a remove event 
     })
   }
   assert.equal(3, calls);
+  assert.deepEqual(events, expected);
   done();
 };
 
@@ -59,7 +76,10 @@ exports['can reset the collection, and get reset event'] = function(done) {
       calls = 0;
   collection.add(models);
   assert.equal(3, collection.length);
-  collection.on('reset', function() { calls++; });
+  collection.on('reset', function(coll) {
+    assert.equal(coll, collection);
+    calls++;
+  });
   collection.reset();
   assert.equal(0, collection.length);
   assert.equal(1, calls);
@@ -106,14 +126,21 @@ exports['can iterate using forEach'] = function(done) {
 
 exports['can sort models by comparator'] = function(done) {
   var collection = new Collection(),
-      models = [ new Model({ name: 'z'}), new Model({ name: 'c' }), new Model({ name: 'a' }) ];
+      models = [ new Model({ name: 'z'}), new Model({ name: 'c' }), new Model({ name: 'a' }) ],
+      calls = 0;
   collection.add(models);
+  // sort should generate "reset"
+  collection.on('reset', function(coll) {
+    assert.equal(coll, collection);
+    calls++;
+  });
   collection.sort(function(a, b) {
     return a.get('name').localeCompare(b.get('name'));
   });
   assert.equal(models[2], collection.at(0));
   assert.equal(models[1], collection.at(1));
   assert.equal(models[0], collection.at(2));
+  assert.equal(calls, 1);
   done();
 }
 
