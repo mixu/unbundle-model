@@ -29,16 +29,14 @@ exports['can add an array of models into the collection, causes add events'] = f
   collection.on('add', function(model, coll, options) {
     assert.equal(coll, collection);
     events.push({ model: model, o: options });
-    if(events.length == 3) {
-      assert.equal(3, collection.length);
-      [0, 1, 2].forEach(function(i){
-        assert.equal(models[i], collection.at(i));
-      });
-      assert.deepEqual(events, expected);
-      done();
-    }
   });
   collection.add(models);
+  assert.equal(3, collection.length);
+  [0, 1, 2].forEach(function(i){
+    assert.equal(models[i], collection.at(i));
+  });
+  assert.deepEqual(events, expected);
+  done();
 };
 
 exports['can remove a model from the collection, removing causes a remove event and reindexes'] = function(done) {
